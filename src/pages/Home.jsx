@@ -1,39 +1,36 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { db, collection, addDoc } from '../firebase'
 
 const Home = () => {
   const [name, setName] = useState('')
   const [showQR, setShowQR] = useState(false)
   const [paymentRegistered, setPaymentRegistered] = useState(false)
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!name.trim()) {
       alert('Por favor, digite seu nome completo')
       return
     }
 
-    const now = new Date()
-    const payment = {
-      id: Date.now().toString(), // Adicionar ID único
-      name: name.trim(),
-      date: now.toLocaleDateString('pt-BR'),
-      time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      status: 'pendente',
-      timestamp: now.getTime() // Timestamp para ordenação
+    try {
+      const now = new Date()
+      const payment = {
+        name: name.trim(),
+        date: now.toLocaleDateString('pt-BR'),
+        time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        status: 'pendente',
+        timestamp: now.getTime()
+      }
+
+      await addDoc(collection(db, 'pagamentos'), payment)
+
+      setShowQR(true)
+      setPaymentRegistered(true)
+    } catch (error) {
+      console.error('Erro ao registrar pagamento:', error)
+      alert('Erro ao registrar pagamento. Tente novamente.')
     }
-
-    const existingPayments = JSON.parse(localStorage.getItem('pagamentos') || '[]')
-    existingPayments.push(payment)
-    localStorage.setItem('pagamentos', JSON.stringify(existingPayments))
-
-    // Forçar evento storage para notificar outras abas/janelas
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: 'pagamentos',
-      newValue: JSON.stringify(existingPayments)
-    }))
-
-    setShowQR(true)
-    setPaymentRegistered(true)
   }
 
   const resetForm = () => {

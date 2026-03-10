@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { db, collection, getDocs, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot } from '../firebase'
 
 const Admin = () => {
   const [payments, setPayments] = useState([])
@@ -15,71 +16,52 @@ const Admin = () => {
       return true
     }
 
-    const loadPayments = () => {
-      const storedPayments = JSON.parse(localStorage.getItem('pagamentos') || '[]')
-      // Ordenar por timestamp (mais recentes primeiro)
-      const sortedPayments = storedPayments.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-      setPayments(sortedPayments)
-    }
-
     if (checkAuth()) {
-      loadPayments()
+      const q = query(collection(db, 'pagamentos'), orderBy('timestamp', 'desc'))
       
-      const interval = setInterval(loadPayments, 3000) // Reduzir para 3 segundos
-      
-      // Listener para mudanças em outras abas/janelas
-      const handleStorageChange = (e) => {
-        if (e.key === 'pagamentos') {
-          loadPayments()
-        }
-      }
-      
-      window.addEventListener('storage', handleStorageChange)
-      
-      return () => {
-        clearInterval(interval)
-        window.removeEventListener('storage', handleStorageChange)
-      }
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const paymentsData = []
+        querySnapshot.forEach((doc) => {
+          paymentsData.push({ id: doc.id, ...doc.data() })
+        })
+        setPayments(paymentsData)
+      })
+
+      return () => unsubscribe()
     }
   }, [navigate])
 
-  const confirmPayment = (index) => {
-    const updatedPayments = [...payments]
-    updatedPayments[index].status = 'confirmado'
-    setPayments(updatedPayments)
-    localStorage.setItem('pagamentos', JSON.stringify(updatedPayments))
-    
-    // Forçar evento storage para notificar outras abas/janelas
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: 'pagamentos',
-      newValue: JSON.stringify(updatedPayments)
-    }))
-  }
-
-  const removePayment = (index) => {
-    if (window.confirm('Tem certeza que deseja remover este pagamento?')) {
-      const updatedPayments = payments.filter((_, i) => i !== index)
-      setPayments(updatedPayments)
-      localStorage.setItem('pagamentos', JSON.stringify(updatedPayments))
-      
-      // Forçar evento storage para notificar outras abas/janelas
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'pagamentos',
-        newValue: JSON.stringify(updatedPayments)
-      }))
+  const confirmPayment = async (paymentId) => {
+    try {
+      const paymentRef = doc(db, 'pagamentos', paymentId)
+      await updateDoc(paymentRef, { status: 'confirmado' })
+    } catch (error) {
+      console.error('Erro ao confirmar pagamento:', error)
+      alert('Erro ao confirmar pagamento. Tente novamente.')
     }
   }
 
-  const clearAllPayments = () => {
+  const removePayment = async (paymentId) => {
+    if (window.confirm('Tem certeza que deseja remover este pagamento?')) {
+      try {
+        await deleteDoc(doc(db, 'pagamentos', paymentId))
+      } catch (error) {
+        console.error('Erro ao remover pagamento:', error)
+        alert('Erro ao remover pagamento. Tente novamente.')
+      }
+    }
+  }
+
+  const clearAllPayments = async () => {
     if (window.confirm('Tem certeza que deseja limpar TODOS os registros? Esta ação não pode ser desfeita.')) {
-      setPayments([])
-      localStorage.setItem('pagamentos', JSON.stringify([]))
-      
-      // Forçar evento storage para notificar outras abas/janelas
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'pagamentos',
-        newValue: JSON.stringify([])
-      }))
+      try {
+        const querySnapshot = await getDocs(collection(db, 'pagamentos'))
+        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref))
+        await Promise.all(deletePromises)
+      } catch (error) {
+        console.error('Erro ao limpar pagamentos:', error)
+        alert('Erro ao limpar pagamentos. Tente novamente.')
+      }
     }
   }
 
@@ -124,8 +106,8 @@ const Admin = () => {
           </div>
         ) : (
           <div className="payment-list">
-            {payments.map((payment, index) => (
-              <div key={index} className="payment-item">
+            {payments.map((payment) => (
+              <div key={payment.id} className="payment-item">
                 <div className="payment-info">
                   <h4>{payment.name}</h4>
                   <p>📅 {payment.date}</p>
@@ -138,7 +120,7 @@ const Admin = () => {
                   {payment.status === 'pendente' && (
                     <button 
                       className="btn btn-success" 
-                      onClick={() => confirmPayment(index)}
+                      onClick={() => confirmPayment(payment.id)}
                       style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
                     >
                       Confirmar
@@ -146,7 +128,7 @@ const Admin = () => {
                   )}
                   <button 
                     className="btn btn-danger" 
-                    onClick={() => removePayment(index)}
+                    onClick={() => removePayment(payment.id)}
                     style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
                   >
                     Remover
