@@ -14,15 +14,23 @@ const Home = () => {
 
     const now = new Date()
     const payment = {
+      id: Date.now().toString(), // Adicionar ID único
       name: name.trim(),
       date: now.toLocaleDateString('pt-BR'),
       time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      status: 'pendente'
+      status: 'pendente',
+      timestamp: now.getTime() // Timestamp para ordenação
     }
 
     const existingPayments = JSON.parse(localStorage.getItem('pagamentos') || '[]')
     existingPayments.push(payment)
     localStorage.setItem('pagamentos', JSON.stringify(existingPayments))
+
+    // Forçar evento storage para notificar outras abas/janelas
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'pagamentos',
+      newValue: JSON.stringify(existingPayments)
+    }))
 
     setShowQR(true)
     setPaymentRegistered(true)
@@ -93,9 +101,14 @@ const Home = () => {
               QR Code para Pagamento
             </h3>
             <div className="qr-code">
-              <img src="/qr.png" alt="QR Code Pix" onError={(e) => {
-                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5lY2Vzc8OhcmlvIGltYWdlbSBkbyBRUiBDb2RlPC90ZXh0Pgo8L3N2Zz4='
-              }} />
+              <img 
+                src="./qr.png" 
+                alt="QR Code Pix" 
+                style={{ maxWidth: '200px', borderRadius: '12px', boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)' }}
+                onError={(e) => {
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5lY2Vzc8OhcmlvIGltYWdlbSBkbyBRUiBDb2RlPC90ZXh0Pgo8L3N2Zz4='
+                }}
+              />
             </div>
             {paymentRegistered && (
               <div className="success-message">

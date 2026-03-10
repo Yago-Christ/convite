@@ -17,15 +17,29 @@ const Admin = () => {
 
     const loadPayments = () => {
       const storedPayments = JSON.parse(localStorage.getItem('pagamentos') || '[]')
-      setPayments(storedPayments)
+      // Ordenar por timestamp (mais recentes primeiro)
+      const sortedPayments = storedPayments.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+      setPayments(sortedPayments)
     }
 
     if (checkAuth()) {
       loadPayments()
       
-      const interval = setInterval(loadPayments, 5000)
+      const interval = setInterval(loadPayments, 3000) // Reduzir para 3 segundos
       
-      return () => clearInterval(interval)
+      // Listener para mudanças em outras abas/janelas
+      const handleStorageChange = (e) => {
+        if (e.key === 'pagamentos') {
+          loadPayments()
+        }
+      }
+      
+      window.addEventListener('storage', handleStorageChange)
+      
+      return () => {
+        clearInterval(interval)
+        window.removeEventListener('storage', handleStorageChange)
+      }
     }
   }, [navigate])
 
@@ -34,6 +48,12 @@ const Admin = () => {
     updatedPayments[index].status = 'confirmado'
     setPayments(updatedPayments)
     localStorage.setItem('pagamentos', JSON.stringify(updatedPayments))
+    
+    // Forçar evento storage para notificar outras abas/janelas
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'pagamentos',
+      newValue: JSON.stringify(updatedPayments)
+    }))
   }
 
   const removePayment = (index) => {
@@ -41,6 +61,12 @@ const Admin = () => {
       const updatedPayments = payments.filter((_, i) => i !== index)
       setPayments(updatedPayments)
       localStorage.setItem('pagamentos', JSON.stringify(updatedPayments))
+      
+      // Forçar evento storage para notificar outras abas/janelas
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'pagamentos',
+        newValue: JSON.stringify(updatedPayments)
+      }))
     }
   }
 
@@ -48,6 +74,12 @@ const Admin = () => {
     if (window.confirm('Tem certeza que deseja limpar TODOS os registros? Esta ação não pode ser desfeita.')) {
       setPayments([])
       localStorage.setItem('pagamentos', JSON.stringify([]))
+      
+      // Forçar evento storage para notificar outras abas/janelas
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'pagamentos',
+        newValue: JSON.stringify([])
+      }))
     }
   }
 
