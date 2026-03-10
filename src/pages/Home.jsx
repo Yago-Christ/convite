@@ -64,6 +64,17 @@ const Home = () => {
             <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>
               Garanta sua presença com Pix
             </h3>
+            <div style={{ 
+              background: 'rgba(255, 255, 255, 0.1)', 
+              borderRadius: '12px', 
+              padding: '1rem', 
+              marginBottom: '1rem', 
+              textAlign: 'center' 
+            }}>
+              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+                💰 R$ 125,00
+              </p>
+            </div>
             <input
               type="text"
               className="input-field"
