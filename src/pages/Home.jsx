@@ -106,6 +106,53 @@ const Home = () => {
                   e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5lY2Vzc8OhcmlvIGltYWdlbSBkbyBRUiBDb2RlPC90ZXh0Pgo8L3N2Zz4='
                 }}
               />
+              
+              <div style={{ marginTop: '1.5rem' }}>
+                <h4 style={{ marginBottom: '0.5rem', textAlign: 'center', opacity: 0.9 }}>
+                  Ou copie a chave PIX:
+                </h4>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '0.5rem', 
+                  alignItems: 'center',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  padding: '0.75rem',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                }}>
+                  <input
+                    type="text"
+                    value="51 993662414"
+                    readOnly
+                    style={{
+                      flex: 1,
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'white',
+                      fontSize: '1rem',
+                      outline: 'none'
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText('51 993662414')
+                      alert('Chave PIX copiada!')
+                    }}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: 'linear-gradient(45deg, #ff6b6b, #ee5a24)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
             </div>
             {paymentRegistered && (
               <div className="success-message">
